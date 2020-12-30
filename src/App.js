@@ -1,50 +1,67 @@
-import React, { Component } from "react"
-import logo from "./logo.svg"
-import "./App.css"
 
-class LambdaDemo extends Component {
-  constructor(props) {
-    super(props)
-    this.state = { loading: false, msg: null }
-  }
+import './App.css';
+import React, { useEffect, useState } from 'react';
+import Recipe from './recipe'
 
-  handleClick = api => e => {
-    e.preventDefault()
 
-    this.setState({ loading: true })
-    fetch("/.netlify/functions/" + api)
-      .then(response => response.json())
-      .then(json => this.setState({ loading: false, msg: json.msg }))
-  }
+const App = () => {
 
-  render() {
-    const { loading, msg } = this.state
+  const APP_ID = 'cfa3ed63';
+  const API_KEY = '04f04d3e7fa6f483c12f0bbad6e69ef6	'; 
 
-    return (
-      <p>
-        <button onClick={this.handleClick("hello")}>{loading ? "Loading..." : "Call Lambda"}</button>
-        <button onClick={this.handleClick("async-dadjoke")}>{loading ? "Loading..." : "Call Async Lambda"}</button>
-        <br />
-        <span>{msg}</span>
-      </p>
-    )
-  }
-}
+  // gets recipe data and displays it
+  let [recipes, setRecipes] = useState([]);
+  //state for search
+  const [search, setSearch] = useState("");
+  // state for query when a user searches for a recipe
+  const [query, setQuery] = useState('goat')
+  //const [counter, setCounter] = useState(0);
 
-class App extends Component {
-  render() {
-    return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <LambdaDemo />
-        </header>
+  useEffect(()=>{
+    getRecipes()
+  }, [query]);
+
+  const getRecipes = async ()=>{
+    const response = await fetch( `https://api.edamam.com/search?q=${query}&app_id=${APP_ID}&app_key=${API_KEY}`);
+    let data = await response.json();
+    console.log(data);
+    setRecipes(data.hits);
+  };
+
+  const updateSearch = e =>{
+    setSearch(e.target.value);
+    console.log(search);
+  };
+
+  const getSearch = e =>{
+    e.preventDefault();
+    setQuery(search);
+    setSearch('');
+  };
+
+  return (
+    <div className="App">
+      <h1>RECIPE APP</h1>
+      <form onSubmit={getSearch} className='search_form'>
+        <input className='search_bar' value={search} onChange={updateSearch} type='text'/>
+        <button  className='btn' type="submit" >Search</button>
+      </form>
+
+      <div className="recipe">
+        {recipes.map(recipe =>(
+          <Recipe
+          key={recipe.recipe.label}
+          title={recipe.recipe.label}
+          calories={recipe.recipe.calories}
+          image={recipe.recipe.image}
+          ingredients={recipe.recipe.ingredients}
+          />
+        ))}
       </div>
-    )
-  }
+
+      {/* <h1 onClick={()=> setCounter(counter + 1)}>{counter}</h1> */}
+    </div>
+  );
 }
 
-export default App
+export default App;
